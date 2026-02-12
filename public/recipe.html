@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en"> 
+<head> 
+<meta charset="UTF-8"> 
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<title>Recipe</title> 
+<link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+<div class="recipe-container">
+
+  <h1 class="form-title">Recipe Form</h1>
+
+  <form id="recipeForm">
+
+    <input type="text" id="title" placeholder="Recipe Title" required>
+
+    <input type="number" id="prepTime" placeholder="Preparation time (minutes)" min="1" required>
+
+    <select id="difficulty" required>
+      <option value="">Select Difficulty</option>
+      <option>Easy</option>
+      <option>Medium</option>
+      <option>Hard</option>
+    </select>
+
+    <input type="text" id="image" placeholder="Paste Image URL (optional)">
+    <!-- Live preview -->
+    <img id="preview" src="images/default.jpg" width="150" style="display:block; margin-top:10px;">
+
+    <textarea id="ingredients" placeholder="Ingredients" required></textarea>
+
+    <textarea id="steps" placeholder="Steps" required></textarea>
+
+    <button type="submit">Add Recipe</button>
+    <a href="index.html"></a>
+
+  </form>
+
+  <div id="recipesList" style="margin-top:20px;"></div>
+
+</div>
+
+<script src="project.js"></script>
+</body>
+</html>

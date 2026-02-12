@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+  <div class="login-box">
+    <h1>Login</h1>
+
+    <form id="loginForm">
+  <input type="text" id="username" placeholder="Username" required>
+  <input type="email" id="email" placeholder="Email" required>
+ <div class="password-box">
+  <input type="password" id="regPassword" placeholder="Password" required>
+  <span onclick="togglePassword()" class="toggle">👁</span>
+</div>
+  <button type="submit">Login</button><br><br>
+<a href="register.html">
+  <button type="button">New User? Register</button>
+</a>
+
+  </form>
+
+  </div>
+
+  <script src="project.js"></script>
+</body>
+</html>
