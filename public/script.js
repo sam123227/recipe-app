@@ -1,4 +1,4 @@
-const backend = "http://localhost:8081";
+const backend = "https://recipe-app-5cgv.onrender.com";
 
 function openRecipe(title, meta, ingredients, steps) {
   document.getElementById("modalTitle").innerText = title;

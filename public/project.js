@@ -1,4 +1,4 @@
-const backend = "http://localhost:8081";
+const backend = "https://recipe-app-5cgv.onrender.com";
 
 if (window.location.pathname.includes("recipe.html")) {
   if (!localStorage.getItem("userId")) {
