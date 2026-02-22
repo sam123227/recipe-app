@@ -2,21 +2,22 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const bcrypt = require("bcrypt");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
-  .catch(err => console.log("Mongo error:", err));
+  .catch((err) => console.log("Mongo error:", err));
 
-// ------------------ Schemas ------------------
 const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
-  email:    { type: String, required: true, unique: true },
-  password: { type: String, required: true }
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  isChef: { type: Boolean, default: false },
 });
 
 const recipeSchema = new mongoose.Schema({
@@ -26,18 +27,22 @@ const recipeSchema = new mongoose.Schema({
   ingredients: String,
   steps: String,
   image: { type: String, default: "images/default.jpg" },
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  status: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: "pending",
+  },
+  createdAt: { type: Date, default: Date.now },
 });
 
 const User = mongoose.model("User", userSchema);
 const Recipe = mongoose.model("Recipe", recipeSchema);
 
-// ------------------ Test Route ------------------
 app.get("/test", (req, res) => {
   res.send("Backend working");
 });
 
-// ------------------ Register ------------------
 app.post("/api/users/register", async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -45,7 +50,9 @@ app.post("/api/users/register", async (req, res) => {
       return res.status(400).json({ success: false, message: "Missing data" });
     }
 
-    const user = new User({ username, email, password });
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({ username, email, password: hashedPassword });
     await user.save();
 
     res.json({ success: true, message: "User successfully registered" });
@@ -54,35 +61,49 @@ app.post("/api/users/register", async (req, res) => {
   }
 });
 
-// ------------------ Login ------------------
 app.post("/api/users/login", async (req, res) => {
-  const { username, email, password } = req.body;
-  const user = await User.findOne({ username, email, password });
+  try {
+    const { username, email, password } = req.body;
+    const user = await User.findOne({ username, email });
 
-  if (!user) {
-    return res.status(401).json({ success: false, message: "Invalid login" });
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Invalid login" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Invalid login" });
+    }
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      userId: user._id,
+      username: user.username,
+      isChef: user.isChef,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
-
-  res.json({
-    success: true,
-    message: "Login successful",
-    userId: user._id,
-    username: user.username
-  });
 });
 
-// ------------------ Add Recipe ------------------
 app.post("/api/recipes", async (req, res) => {
   try {
-    const { title, time, difficulty, ingredients, steps, userId, image } = req.body;
+    const { title, time, difficulty, ingredients, steps, userId, image } =
+      req.body;
 
     if (!userId) {
-      return res.status(401).json({ success: false, message: "Login required" });
+      return res
+        .status(401)
+        .json({ success: false, message: "Login required" });
     }
 
     const userExists = await User.findById(userId);
     if (!userExists) {
-      return res.status(401).json({ success: false, message: "Invalid user. Please login again." });
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid user. Please login again." });
     }
 
     const recipe = new Recipe({
@@ -92,22 +113,62 @@ app.post("/api/recipes", async (req, res) => {
       ingredients,
       steps,
       image: image || "images/default.jpg",
-      user: userId
+      user: userId,
+      status: "pending",
     });
 
     await recipe.save();
 
-    res.json({ success: true, message: "Recipe added successfully" });
+    res.json({
+      success: true,
+      message: "Recipe submitted! Waiting for chef approval.",
+    });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
 });
 
-// ------------------ Fetch Recipes ------------------
 app.get("/api/recipes", async (req, res) => {
-  const recipes = await Recipe.find().populate("user", "username");
+  const recipes = await Recipe.find({ status: "approved" })
+    .populate("user", "username")
+    .sort({ createdAt: -1 });
   res.json(recipes);
 });
 
-// ------------------ Start Server ------------------
-module.exports = app;
+app.get("/api/recipes/pending", async (req, res) => {
+  const recipes = await Recipe.find({ status: "pending" })
+    .populate("user", "username")
+    .sort({ createdAt: -1 });
+  res.json(recipes);
+});
+
+app.put("/api/recipes/:id/approve", async (req, res) => {
+  try {
+    const recipe = await Recipe.findByIdAndUpdate(
+      req.params.id,
+      { status: "approved" },
+      { new: true },
+    );
+    res.json({ success: true, message: "Recipe approved!", recipe });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+app.put("/api/recipes/:id/reject", async (req, res) => {
+  try {
+    const recipe = await Recipe.findByIdAndUpdate(
+      req.params.id,
+      { status: "rejected" },
+      { new: true },
+    );
+    res.json({ success: true, message: "Recipe rejected", recipe });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+});
+
+const PORT = process.env.PORT || 8081;
+app.listen(PORT, () =>
+  console.log(`Server running on http://localhost:${PORT}`),
+);

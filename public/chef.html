@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chef Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="chef-container">
+  
+  <div class="chef-header">
+    <h1>👨‍🍳 Chef Dashboard</h1>
+    <p>Review and approve pending recipes</p>
+  </div>
+
+  <div class="nav-buttons">
+    <button onclick="location.href='index.html'"> View Homepage</button>
+    <button class="logout-btn" onclick="logout()"> Logout</button>
+  </div>
+
+  <div id="pendingRecipes" class="pending-recipes"></div>
+
+</div>
+
+
+<div id="recipeModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.7); z-index:1000; padding:20px; overflow-y:auto;">
+  <div style="max-width:600px; margin:50px auto; background:white; border-radius:12px; padding:30px; position:relative;">
+    <span onclick="closeModal()" style="position:absolute; top:15px; right:20px; font-size:28px; cursor:pointer; color:#95a5a6;">&times;</span>
+    
+    <h2 id="modalTitle" style="margin-bottom:10px;"></h2>
+    <p id="modalMeta" style="color:#7f8c8d; margin-bottom:20px;"></p>
+    
+    <h3 style="color:#2c3e50; margin-top:20px;">Ingredients:</h3>
+    <pre id="modalIngredients" style="white-space:pre-wrap; background:#f8f9fa; padding:15px; border-radius:8px; line-height:1.6;"></pre>
+    
+    <h3 style="color:#2c3e50; margin-top:20px;">Steps:</h3>
+    <pre id="modalSteps" style="white-space:pre-wrap; background:#f8f9fa; padding:15px; border-radius:8px; line-height:1.6;"></pre>
+  </div>
+</div>
+
+<script>
+const backend = "http://localhost:8081";
+
+if (!localStorage.getItem("isChef") || localStorage.getItem("isChef") !== "true") {
+  alert("Access denied. Only chefs can access this page.");
+  window.location.href = "index.html";
+}
+
+async function loadPendingRecipes() {
+  try {
+    const res = await fetch(`${backend}/api/recipes/pending`);
+    const recipes = await res.json();
+
+    const container = document.getElementById("pendingRecipes");
+
+    if (recipes.length === 0) {
+      container.innerHTML = '<div class="no-recipes"> No pending recipes! All caught up.</div>';
+      return;
+    }
+
+    let html = "";
+    recipes.forEach(r => {
+      const title = r.title.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+      const username = (r.user?.username || "Unknown").split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+
+      const escapedIngredients = r.ingredients.replace(/`/g, '\\`').replace(/\$/g, '\\$');
+      const escapedSteps = r.steps.replace(/`/g, '\\`').replace(/\$/g, '\\$');
+
+      html += `
+        <div class="recipe-card" id="recipe-${r._id}">
+          <img src="${r.image || 'default.jpg'}" alt="${r.title}">
+          <h3>${title}</h3>
+          <p class="meta"> ${r.time} min | ${r.difficulty}</p>
+          <p class="author"> By: ${username}</p>
+          
+          <button class="view-btn" onclick="viewFullRecipe('${title}', '${r.time}', '${r.difficulty}', \`${escapedIngredients}\`, \`${escapedSteps}\`)">
+             View Full Recipe
+          </button>
+
+          <div class="action-buttons">
+            <button class="approve-btn" onclick="approveRecipe('${r._id}')"> Approve</button>
+            <button class="reject-btn" onclick="rejectRecipe('${r._id}')"> Reject</button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+
+  } catch (err) {
+    console.log("Error loading pending recipes:", err);
+  }
+}
+
+function viewFullRecipe(title, time, difficulty, ingredients, steps) {
+  document.getElementById('modalTitle').innerText = title;
+  document.getElementById('modalMeta').innerText = `⏱️ ${time} min | 📊 ${difficulty}`;
+  document.getElementById('modalIngredients').innerText = ingredients;
+  document.getElementById('modalSteps').innerText = steps;
+  document.getElementById('recipeModal').style.display = 'block';
+}
+
+function closeModal() {
+  document.getElementById('recipeModal').style.display = 'none';
+}
+
+async function approveRecipe(id) {
+  try {
+    const res = await fetch(`${backend}/api/recipes/${id}/approve`, {
+      method: "PUT"
+    });
+    
+    const data = await res.json();
+    
+    if (data.success) {
+      document.getElementById(`recipe-${id}`).style.display = "none";
+      alert(" Recipe approved successfully!");
+      loadPendingRecipes();
+    }
+  } catch (err) {
+    alert("Error approving recipe");
+  }
+}
+
+async function rejectRecipe(id) {
+  if (!confirm("Are you sure you want to reject this recipe?")) return;
+  
+  try {
+    const res = await fetch(`${backend}/api/recipes/${id}/reject`, {
+      method: "PUT"
+    });
+    
+    const data = await res.json();
+    
+    if (data.success) {
+      document.getElementById(`recipe-${id}`).style.display = "none";
+      alert(" Recipe rejected");
+      loadPendingRecipes();
+    }
+  } catch (err) {
+    alert("Error rejecting recipe");
+  }
+}
+
+function logout() {
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+
+
+loadPendingRecipes();
+</script>
+
+</body>
+</html>

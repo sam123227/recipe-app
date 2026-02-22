@@ -5,14 +5,13 @@
 
 body {
   margin: 0;
-  height: 100vh;
+  min-height: 100vh;
   background: #f2f4f8;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; 
+  padding: 40px 16px; 
 }
-
-
 
 .login-box {
   background: white;
@@ -64,10 +63,10 @@ body {
   text-align: center;
   text-shadow: 1px 1px 2px #ccc;
 }
-/* RECIPE FORM STYLING */
+
 .recipe-container {
   max-width: 500px;
-  margin: 60px auto;
+  margin: 0 auto; 
   background: #ffffff;
   padding: 30px;
   border-radius: 12px;
@@ -97,11 +96,11 @@ body {
 }
 
 #recipeForm button {
-  width: 100;
+  width: 100%;
   display: block;
   margin: 20px auto 0;
   padding: 12px;
-  background:blue;
+  background: #e63946;
   color: white;
   font-size: 16px;
   border: none;
@@ -111,7 +110,7 @@ body {
 }
 
 #recipeForm button:hover {
-  background:red;
+  background: #c1121f;
 }
 
 .password-box {
@@ -129,4 +128,3 @@ body {
   top: 8px;
   cursor: pointer;
 }
-

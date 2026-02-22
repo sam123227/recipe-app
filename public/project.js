@@ -1,6 +1,5 @@
-const backend = "/api";
+const backend = "http://localhost:8081";
 
-// ---------- Page Access Control ----------
 if (window.location.pathname.includes("recipe.html")) {
   if (!localStorage.getItem("userId")) {
     alert("Login required");
@@ -8,54 +7,56 @@ if (window.location.pathname.includes("recipe.html")) {
   }
 }
 
-// ---------- Register ----------
-document.getElementById("registerForm")?.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const username = document.getElementById("regUsername").value.trim();
-  const email = document.getElementById("regEmail").value.trim();
-  const password = document.getElementById("regPassword").value;
+document
+  .getElementById("registerForm")
+  ?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("regUsername").value.trim();
+    const email = document.getElementById("regEmail").value.trim();
+    const password = document.getElementById("regPassword").value;
 
-  if (!/^[a-zA-Z0-9_]{4,20}$/.test(username)) {
-    alert("Username must be 4-20 characters and contain only letters, numbers, or underscores.");
-    return;
-  }
+    if (!/^[a-zA-Z ]{4,30}$/.test(username)) {
+      alert(
+        "Username must be 4-30 characters and contain only letters and spaces.",
+      );
+      return;
+    }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    alert("Please enter a valid email address.");
-    return;
-  }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
 
-  if (password.length < 8) {
-    alert("Password must be at least 8 characters long.");
-    return;
-  }
+    if (password.length < 8) {
+      alert("Password must be at least 8 characters long.");
+      return;
+    }
 
-  const res = await fetch(`${backend}/api/users/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, email, password })
+    const res = await fetch(`${backend}/api/users/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, email, password }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("User successfully registered. Please login.");
+      window.location.href = "login.html";
+    } else {
+      alert(data.message);
+    }
   });
 
-  const data = await res.json();
-
-  if (data.success) {
-    alert("User successfully registered. Please login.");
-    window.location.href = "login.html";
-  } else {
-    alert(data.message);
-  }
-});
-
-// ---------- Login ----------
 document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const username = document.getElementById("username").value.trim();
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("regPassword").value;
 
-  if (username.length < 4) { 
-    alert("Username must be at least 4 characters."); 
-    return; 
+  if (username.length < 4) {
+    alert("Username must be at least 4 characters.");
+    return;
   }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -71,7 +72,7 @@ document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
   const res = await fetch(`${backend}/api/users/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, email, password })
+    body: JSON.stringify({ username, email, password }),
   });
 
   const data = await res.json();
@@ -79,13 +80,18 @@ document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
     alert(data.message);
     localStorage.setItem("userId", data.userId);
     localStorage.setItem("username", data.username);
-    window.location.href = "recipe.html";
+    localStorage.setItem("isChef", data.isChef);
+
+    if (data.isChef) {
+      window.location.href = "chef.html";
+    } else {
+      window.location.href = "recipe.html";
+    }
   } else {
     alert(data.message);
   }
 });
 
-// ---------- Recipe Form ----------
 document.getElementById("recipeForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const image = document.getElementById("image").value.trim();
@@ -104,7 +110,9 @@ document.getElementById("recipeForm")?.addEventListener("submit", async (e) => {
   const steps = document.getElementById("steps").value.trim();
 
   if (!/^[a-zA-Z\s.,'()-]{3,15}$/.test(title)) {
-    alert("Recipe title must be 3-15 characters and contain only letters, spaces, or punctuation.");
+    alert(
+      "Recipe title must be 3-15 characters and contain only letters, spaces, or punctuation.",
+    );
     return;
   }
 
@@ -119,12 +127,16 @@ document.getElementById("recipeForm")?.addEventListener("submit", async (e) => {
   }
 
   if (ingredients.length < 10 || !/([a-zA-Z]{3,})/.test(ingredients)) {
-    alert("Ingredients must be realistic and contain proper words (at least 3 letters each).");
+    alert(
+      "Ingredients must be realistic and contain proper words (at least 3 letters each).",
+    );
     return;
   }
 
   if (steps.length < 20 || !/[a-zA-Z]/.test(steps)) {
-    alert("Steps must be realistic instructions containing proper words and at least 20 characters.");
+    alert(
+      "Steps must be realistic instructions containing proper words and at least 20 characters.",
+    );
     return;
   }
 
@@ -133,49 +145,32 @@ document.getElementById("recipeForm")?.addEventListener("submit", async (e) => {
   const res = await fetch(`${backend}/api/recipes`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(recipe)
+    body: JSON.stringify(recipe),
   });
 
   const data = await res.json();
-  alert(data.message);
-
-  e.target.reset();
-  fetchRecipes();
-  window.location.href = "index.html";
+  if (data.success) {
+    document.getElementById("successMsg").style.display = "block";
+    e.target.reset();
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 2000);
+  } else {
+    alert(data.message);
+  }
 });
 
-// ---------- Image Preview while typing ----------
 const imageInput = document.getElementById("image");
-const preview = document.getElementById("preview"); // make sure you have <img id="preview">
+const preview = document.getElementById("preview");
 
 if (imageInput && preview) {
-  imageInput.addEventListener("input", function() {
+  imageInput.addEventListener("input", function () {
     const url = this.value.trim();
     if (url) preview.src = url;
     else preview.src = "images/default.jpg";
   });
 }
 
-// ---------- Fetch Recipes ----------
-async function fetchRecipes() {
-  const res = await fetch(`${backend}/api/recipes`);
-  const recipes = await res.json();
-
-  let html = "<ul>";
-  recipes.forEach(r => {
-    html += `<li>
-      <b>${r.title}</b> - ${r.difficulty}<br>
-      Added by: ${r.user?.username || "Unknown"}<br>
-      <img src="${r.image}" alt="${r.title}" width="150">
-    </li>`;
-  });
-  html += "</ul>";
-
-  document.getElementById("recipesList").innerHTML = html;
-}
-
-
-// ---------- Toggle Password Visibility ----------
 function togglePassword() {
   const pass = document.getElementById("regPassword");
   pass.type = pass.type === "password" ? "text" : "password";

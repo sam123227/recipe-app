@@ -26,14 +26,19 @@
     </select>
 
     <input type="text" id="image" placeholder="Paste Image URL (optional)">
-    <!-- Live preview -->
     <img id="preview" src="images/default.jpg" width="150" style="display:block; margin-top:10px;">
 
     <textarea id="ingredients" placeholder="Ingredients" required></textarea>
 
     <textarea id="steps" placeholder="Steps" required></textarea>
+  
 
-    <button type="submit">Add Recipe</button>
+<div id="successMsg" style="display:none; color:green; text-align:center; padding:10px; font-size:16px; margin-top:10px;">
+   Recipe submitted! Waiting for chef approval. Redirecting...
+</div>
+
+
+    <button type="submit">Add</button>
     <a href="index.html"></a>
 
   </form>

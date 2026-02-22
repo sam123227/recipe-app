@@ -2,25 +2,29 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Simple Nepali Recipes</title>
+  <title>Simple Recipes</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-  <header>
-    <h1>Simple Nepali Recipes Sharing Website</h1>
-
-    <div class="search-box">
-      <input type="search" placeholder="Search recipes..." oninput="searchRecipe(this.value)">
-    </div>
-  </header>
+ <header>
+  <h1>Simple Recipes Sharing Website</h1>
+  <div class="search-box">
+    <input type="search" placeholder="Search recipes..." oninput="searchRecipe(this.value)">
+  </div>
+  <div class="nav-btn">
+    <button onclick="goToAddRecipe()"> Add Recipe</button>
+    <button onclick="logout()" class="logout-nav-btn"> Logout</button>
+    <div id="userAvatar"></div>
+  </div>
+</header>
 
   <main>
 
     <section class="intro">
-      <h2>Nepali Home Cooking</h2>
-      <p>Classic Nepali dishes you can prepare and share with everyone.</p>
+      <h2>Global Kitchen</h2>
+      <p>Classic Dishes You Can Prepare And Share With Everyone.</p>
     </section>
 
     <section id="recipes">
@@ -28,33 +32,17 @@
 
   </main>
 
-  <div class="btn">
-    <a href="login.html">
-      <button>User Login / Registration</button>
-    </a>
-  </div>
-
   <div id="modal" class="modal">
-
     <div class="modal-content">
-
       <span class="modal-close" onclick="closeRecipe()">✖</span>
-
       <h2 id="modalTitle"></h2>
-
       <p id="modalMeta"></p>
-
       <h3 class="section-title">Ingredients</h3>
       <pre id="modalIngredients"></pre>
-
       <h3 class="section-title">Steps</h3>
       <pre id="modalSteps"></pre>
-
     </div>
-
   </div>
-
-
 
   <script src="script.js"></script>
 

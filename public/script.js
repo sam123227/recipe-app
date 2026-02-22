@@ -1,4 +1,4 @@
-const backend = "/api";
+const backend = "http://localhost:8081";
 
 function openRecipe(title, meta, ingredients, steps) {
   document.getElementById("modalTitle").innerText = title;
@@ -16,11 +16,21 @@ function closeRecipe() {
 function searchRecipe(text) {
   text = text.toLowerCase();
 
-  document.querySelectorAll("#recipes article").forEach(card => {
+  document.querySelectorAll("#recipes article").forEach((card) => {
     card.style.display = card.innerText.toLowerCase().includes(text)
       ? "block"
       : "none";
   });
+}
+
+function goToAddRecipe() {
+  const userId = localStorage.getItem("userId");
+
+  if (userId) {
+    window.location.href = "recipe.html";
+  } else {
+    window.location.href = "login.html";
+  }
 }
 
 async function loadRecipes() {
@@ -30,32 +40,63 @@ async function loadRecipes() {
 
     let html = "";
 
-    recipes.forEach(r => {
-      html += `
-        <article class="card">
-          <img src="${r.image || 'default.jpg'}" alt="${r.title}">
-          <h3>${r.title}</h3>
-          <p>Prep: ${r.time} • ${r.difficulty}</p>
-          <p>By: ${r.user?.username || "Unknown"}</p>
+    if (recipes.length === 0) {
+      html =
+        "<p style='text-align:center; padding:20px; color:#888;'>No approved recipes yet. Waiting for chef approval...</p>";
+    } else {
+      recipes.forEach((r) => {
+        const title = r.title
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+        const username = (r.user?.username || "Unknown")
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
 
-          <button onclick="openRecipe(
-            '${r.title}',
-            'Prep: ${r.time} • ${r.difficulty}',
-            '${r.ingredients.replace(/\n/g, "\\n")}',
-            '${r.steps.replace(/\n/g, "\\n")}'
-          )">
-            View Recipe
-          </button>
-        </article>
-      `;
-    });
+        html += `
+          <article class="card">
+            <img src="${r.image || "default.jpg"}" alt="${r.title}">
+            <h3>${title}</h3>
+            <p>Prep: ${r.time} min | Difficulty: ${r.difficulty}</p>
+            <p>Added by: ${username}</p>
+
+            <button onclick="openRecipe(
+              '${title}',
+              'Prep: ${r.time} min | Difficulty: ${r.difficulty}',
+              '${r.ingredients.replace(/\n/g, "\\n")}',
+              '${r.steps.replace(/\n/g, "\\n")}'
+            )">
+              View Recipe
+            </button>
+          </article>
+        `;
+      });
+    }
 
     document.getElementById("recipes").innerHTML = html;
-
   } catch (err) {
     console.log("Error loading recipes:", err);
   }
 }
 
-// Load recipes when page opens
 loadRecipes();
+function logout() {
+  if (confirm("Are you sure you want to logout?")) {
+    localStorage.clear();
+    alert("Logged out successfully!");
+    location.reload();
+  }
+}
+
+const username = localStorage.getItem("username");
+if (username) {
+  const initials = username.substring(0, 2).toUpperCase();
+
+  document.getElementById("userAvatar").innerHTML = `
+    <div title="${username}" style="width:45px; height:45px; border-radius:50%; background:#e74c3c; color:white; display:flex; align-items:center; justify-content:center; 
+    font-weight:bold; font-size:16px; cursor:pointer;">
+      ${initials}
+    </div>
+  `;
+}
