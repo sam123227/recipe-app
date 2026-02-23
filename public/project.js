@@ -5,6 +5,11 @@ if (window.location.pathname.includes("recipe.html")) {
     alert("Login required");
     window.location.href = "login.html";
   }
+
+  if (localStorage.getItem("isChef") === "true") {
+    alert("Chefs cannot add recipes!");
+    window.location.href = "chef.html";
+  }
 }
 
 document
