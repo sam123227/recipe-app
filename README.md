@@ -8,7 +8,7 @@ https://recipe-app-beryl-kappa.vercel.app/
 
 ## Screenshot
 
-![Recipe App Home](screenshots/home.png)
+![recipe-app](screenshots/home.png)
 
 ## ✨ Features
 
